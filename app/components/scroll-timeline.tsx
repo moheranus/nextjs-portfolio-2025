@@ -1,4 +1,4 @@
-'use client';
+/* eslint-disable react-hooks/rules-of-hooks */
 
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -6,11 +6,12 @@ import {
   useScroll,
   useTransform,
   useSpring,
+  MotionValue,
 } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "../lib/utils";
+import { Card, CardContent } from "./ui/card";
 import { Calendar } from "lucide-react";
-import ElectricBorder from "./ElectricBorder";
+import ElectricBorder from './ElectricBorder';
 
 export interface TimelineEvent {
   id?: string;
@@ -23,7 +24,7 @@ export interface TimelineEvent {
 }
 
 export interface ScrollTimelineProps {
-  events?: TimelineEvent[];
+  events: TimelineEvent[];
   title?: string;
   subtitle?: string;
   animationOrder?: "sequential" | "staggered" | "simultaneous";
@@ -107,9 +108,13 @@ export const ScrollTimeline = ({
   const progressHeight = useTransform(smoothProgress, [0, 1], ["0%", "100%"]);
 
   useEffect(() => {
-    const unsubscribe = scrollYProgress.on("change", (v) => {
+    const unsubscribe = scrollYProgress.onChange((v) => {
       const newIndex = Math.floor(v * events.length);
-      if (newIndex !== activeIndex && newIndex >= 0 && newIndex < events.length) {
+      if (
+        newIndex !== activeIndex &&
+        newIndex >= 0 &&
+        newIndex < events.length
+      ) {
         setActiveIndex(newIndex);
       }
     });
@@ -203,6 +208,9 @@ export const ScrollTimeline = ({
         : cardAlignment === "left"
         ? "lg:mr-auto lg:ml-0"
         : "lg:ml-auto lg:mr-0";
+    const perspectiveClass = perspective
+      ? "transform transition-transform hover:rotate-y-1 hover:rotate-x-1"
+      : "";
 
     return cn(
       baseClasses,
@@ -236,8 +244,10 @@ export const ScrollTimeline = ({
           ></div>
 
           {/* === MODIFICATION START === */}
+          {/* Enhanced Progress Indicator with Traveling Glow */}
           {progressIndicator && (
             <>
+              {/* The main filled progress line */}
               <motion.div
                 className="absolute top-0 z-10"
                 style={{
@@ -248,33 +258,38 @@ export const ScrollTimeline = ({
                   borderRadius:
                     progressLineCap === "round" ? "9999px" : "0px",
                   background: `linear-gradient(to bottom, #22d3ee, #6366f1, #a855f7)`,
+                  // Enhanced shadow for a constant glow effect along the path
                   boxShadow: `
                     0 0 15px rgba(99,102,241,0.5),
                     0 0 25px rgba(168,85,247,0.3)
                   `,
                 }}
               />
+              {/* The traveling glow "comet" at the head of the line */}
               <motion.div
                 className="absolute z-20"
                 style={{
                   top: progressHeight,
                   left: "50%",
                   translateX: "-50%",
-                  translateY: "-50%",
+                  translateY: "-50%", // Center the comet on the line's end point
                 }}
               >
                 <motion.div
-                  className="w-5 h-5 rounded-full"
+                  className="w-5 h-5 rounded-full" // Size of the comet core
                   style={{
                     background:
                       "radial-gradient(circle, rgba(168,85,247,0.8) 0%, rgba(99,102,241,0.5) 40%, rgba(34,211,238,0) 70%)",
+                    // Intense, layered glow effect for the comet
                     boxShadow: `
                       0 0 15px 4px rgba(168, 85, 247, 0.6),
                       0 0 25px 8px rgba(99, 102, 241, 0.4),
                       0 0 40px 15px rgba(34, 211, 238, 0.2)
                     `,
                   }}
-                  animate={{ scale: [1, 1.3, 1] }}
+                  animate={{
+                    scale: [1, 1.3, 1],
+                  }}
                   transition={{
                     duration: 2,
                     repeat: Infinity,
@@ -288,18 +303,12 @@ export const ScrollTimeline = ({
 
           <div className="relative z-20">
             {events.map((event, index) => {
-              /* ---------- PER‑CARD PARALLAX (no hook violation) ---------- */
-              const start = index / events.length;
-              const end = (index + 1) / events.length;
-              const yOffset =
-                parallaxIntensity > 0
-                  ? useTransform(
-                      smoothProgress,
-                      [start, end],
-                      [parallaxIntensity * 100, -parallaxIntensity * 100]
-                    )
-                  : null;
-
+              // eslint-disable-next-line react-hooks/rules-of-hooks
+              const yOffset = useTransform(
+                smoothProgress,
+                [0, 1],
+                [parallaxIntensity * 100, -parallaxIntensity * 100]
+              );
               return (
                 <div
                   key={event.id || index}
@@ -327,7 +336,9 @@ export const ScrollTimeline = ({
                     <motion.div
                       className={cn(
                         "w-6 h-6 rounded-full border-4 bg-background flex items-center justify-center",
-                        index <= activeIndex ? "border-primary" : "border bg-card"
+                        index <= activeIndex
+                          ? "border-primary"
+                          : "border bg-card"
                       )}
                       animate={
                         index <= activeIndex
@@ -349,57 +360,57 @@ export const ScrollTimeline = ({
                       }}
                     />
                   </div>
-
                   <motion.div
-                    className={cn(getCardClasses(index), "mt-12 lg:mt-0")}
+                    className={cn(
+                      getCardClasses(index),
+                      "mt-12 lg:mt-0"
+                    )}
                     variants={getCardVariants(index)}
                     initial="initial"
                     whileInView="whileInView"
                     viewport={{ once: false, margin: "-100px" }}
-                    style={yOffset ? { y: yOffset } : undefined}
+                    style={parallaxIntensity > 0 ? { y: yOffset } : undefined}
                   >
-                    {/* ---------- ELECTRIC BORDER (className required) ---------- */}
                     <ElectricBorder
-                      className="w-full"               // <-- required
-                      // you can also keep your custom class:
-                      // className="electricBord w-full"
-                      color="#7df9ff"
-                      speed={1}
-                      chaos={0.5}
-                      thickness={2}
-                      style={{ borderRadius: 16, marginBottom: 16 }}
-                    >
-                      <Card className="bg-background border border-blue-500/20 shadow-lg">
-                        <CardContent className="p-6">
-                          {dateFormat === "badge" ? (
-                            <div className="flex items-center mb-2">
-                              {event.icon || (
-                                <Calendar className="h-4 w-4 mr-2 text-primary" />
-                              )}
-                              <span
-                                className={cn(
-                                  "text-sm font-bold",
-                                  event.color ? `text-${event.color}` : "text-primary"
-                                )}
-                              >
-                                {event.year}
-                              </span>
-                            </div>
-                          ) : (
-                            <p className="text-lg font-bold text-primary mb-2">
-                              {event.year}
-                            </p>
-                          )}
-                          <h3 className="text-xl font-bold mb-1">{event.title}</h3>
-                          {event.subtitle && (
-                            <p className="text-muted-foreground font-medium mb-2">
-                              {event.subtitle}
-                            </p>
-                          )}
-                          <p className="text-muted-foreground">{event.description}</p>
-                        </CardContent>
-                      </Card>
-                    </ElectricBorder>
+                    className={"electricBord"}
+  color="#7df9ff"
+  speed={1}
+  chaos={0.5}
+  thickness={2}
+  style={{ borderRadius: 16, marginBottom: 16 }}
+>
+  <Card className="bg-background border border-blue-500/20 shadow-lg">
+    <CardContent className="p-6">
+      {dateFormat === "badge" ? (
+        <div className="flex items-center mb-2">
+          {event.icon || (
+            <Calendar className="h-4 w-4 mr-2 text-primary" />
+          )}
+          <span
+            className={cn(
+              "text-sm font-bold",
+              event.color ? `text-${event.color}` : "text-primary"
+            )}
+          >
+            {event.year}
+          </span>
+        </div>
+      ) : (
+        <p className="text-lg font-bold text-primary mb-2">
+          {event.year}
+        </p>
+      )}
+      <h3 className="text-xl font-bold mb-1">{event.title}</h3>
+      {event.subtitle && (
+        <p className="text-muted-foreground font-medium mb-2">
+          {event.subtitle}
+        </p>
+      )}
+      <p className="text-muted-foreground">{event.description}</p>
+    </CardContent>
+  </Card>
+</ElectricBorder>
+
                   </motion.div>
                 </div>
               );
