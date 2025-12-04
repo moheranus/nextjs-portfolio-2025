@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Danile Shobe | Full Stack Developer & AI Innovator",
+  title: "Daniel Shobe | Full Stack Developer & AI Innovator",
   description:
-    "Welcome to Shobe Tech — a futuristic portfolio showcasing full stack development, AI projects, and creative digital solutions. Built with Next.js, React, and Framer Motion.",
+    "Welcome to Daniel Shobe — a futuristic portfolio showcasing full stack development, AI projects, and creative digital solutions. Built with Next.js, React, and Framer Motion.",
   keywords: [
     "Daniel Shobe",
     "Full Stack Developer",
